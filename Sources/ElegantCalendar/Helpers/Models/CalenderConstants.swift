@@ -47,7 +47,7 @@ struct CalendarConstants {
         }()
 
         static let daysGridVerticalSpacing: CGFloat = 4
-        static let daysGridHorizontalSpacing: CGFloat = 2
+        static let daysGridHorizontalSpacing: CGFloat = 0 // 2
         static let dayWidth: CGFloat = {
             let innerGridSpacing: CGFloat = (daysInRow - 1) * daysGridHorizontalSpacing
             return (monthWidth - innerGridSpacing) / daysInRow
