@@ -3,6 +3,7 @@
 //  SwiftUIView
 //
 //  Created by Ray Wojciechowski on 17.08.21.
+//  taken from: https://stackoverflow.com/questions/56760335/round-specific-corners-swiftui
 //
 
 import SwiftUI
