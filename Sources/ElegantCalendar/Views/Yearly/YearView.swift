@@ -1,4 +1,5 @@
 // Kevin Li - 6:56 PM - 6/13/20
+// RayWo - 8/18/21
 
 import SwiftUI
 
@@ -27,7 +28,9 @@ struct YearView: View, YearlyCalendarManagerDirectAccess {
     private var yearText: some View {
         Text(year.year)
             .font(.system(size: 38, weight: .thin, design: .rounded))
-            .foregroundColor(isYearSameAsTodayYear ? theme.primary : .primary)
+      // TODO move to datasource?
+//            .foregroundColor(isYearSameAsTodayYear ? theme.primary : .primary)
+            .foregroundColor(Color.accentColor)
     }
 
     private var monthsStack: some View {

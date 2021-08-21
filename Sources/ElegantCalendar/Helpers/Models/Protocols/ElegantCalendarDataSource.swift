@@ -8,6 +8,7 @@ public protocol ElegantCalendarDataSource: MonthlyCalendarDataSource, YearlyCale
 public protocol MonthlyCalendarDataSource {
   func calendar(backgroundColorOpacityForDate date: Date) -> Double
   func calendar(backgroundColorForDate date: Date) -> Color?
+  func calendar(auxDotsColorsForDate date: Date) -> [Color]
   func calendar(canSelectDate date: Date) -> Bool
   func calendar(viewForSelectedDate date: Date, dimensions size: CGSize) -> AnyView
 }
@@ -17,6 +18,8 @@ public extension MonthlyCalendarDataSource {
   func calendar(backgroundColorOpacityForDate date: Date) -> Double { 1 }
   
   func calendar(backgroundColorForDate date: Date) -> Color? { nil }
+  
+  func calendar(auxDotsColorsForDate date: Date) -> [Color] { [] }
   
   func calendar(canSelectDate date: Date) -> Bool { true }
   
@@ -28,12 +31,15 @@ public extension MonthlyCalendarDataSource {
 
 
 public protocol YearlyCalendarDataSource {
+  func calendar(backgroundColorOpacityForDate date: Date) -> Double
   func calendar(backgroundColorForDate date: Date) -> Color?
   func calendar(isRangeStartForDate date: Date) -> Bool
   func calendar(isRangeEndForDate date: Date) -> Bool
 }
 
 extension YearlyCalendarDataSource {
+  func calendar(backgroundColorOpacityForDate date: Date) -> Double { 1 }
+  
   func calendar(backgroundColorForDate date: Date) -> Color? { nil }
   
   func calendar(isRangeStartForDate date: Date) -> Bool { false }

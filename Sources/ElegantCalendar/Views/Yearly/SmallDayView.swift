@@ -24,15 +24,23 @@ struct SmallDayView: View, YearlyCalendarManagerDirectAccess {
   
   var body: some View {
     Text(numericDay)
-      .font(.system(size: 8))
-      .foregroundColor(isDayToday ? .systemBackground : .primary)
+      .font(.system(size: 8, weight: fontWeight))
+      .foregroundColor(isDayToday ? .white : .primary)
       .frame(width: CalendarConstants.Yearly.dayWidth, height: CalendarConstants.Yearly.dayWidth)
-      .background(backgroundView)
+      .background(backgroundView.opacity(opacity))
       .opacity(isDayWithinDateRange && isDayWithinWeekMonthAndYear ? 1 : 0)
   }
   
   private var numericDay: String {
     String(calendar.component(.day, from: day))
+  }
+  
+  private var fontWeight: Font.Weight {
+    isDayToday ? .bold : .regular
+  }
+  
+  private var opacity: Double {
+    datasource?.calendar(backgroundColorOpacityForDate: day) ?? 0
   }
   
   private var backgroundColor: Color {
@@ -41,7 +49,8 @@ struct SmallDayView: View, YearlyCalendarManagerDirectAccess {
   
   private var backgroundView: AnyView {
     if isDayToday {
-      return AnyView(Color.accentColor)
+      return AnyView(Color.accentColor
+                      .overlay(Rectangle().strokeBorder()))
     }
     
     if let datasource = datasource {

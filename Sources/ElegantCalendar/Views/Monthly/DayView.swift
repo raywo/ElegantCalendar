@@ -24,6 +24,7 @@ struct DayView: View, MonthlyCalendarManagerDirectAccess {
     datasource?.calendar(canSelectDate: day) ?? true
   }
   
+  // TODO necessary anymore?
   private var isDaySelectableAndInRange: Bool {
     isDayWithinDateRange && isDayWithinWeekMonthAndYear && canSelectDay
   }
@@ -38,15 +39,20 @@ struct DayView: View, MonthlyCalendarManagerDirectAccess {
   }
   
   var body: some View {
-    Text(numericDay)
-      .font(.footnote)
-      .foregroundColor(foregroundColor)
-      .frame(width: CalendarConstants.Monthly.dayWidth, height: CalendarConstants.Monthly.dayWidth)
-      .background(backgroundColor)
-      .clipShape(Circle())
-      .opacity(opacity)
-      .overlay(isSelected ? CircularSelectionView() : nil)
-      .onTapGesture(perform: notifyManager)
+    VStack(spacing: 7) {
+      Text(numericDay)
+        .font(.footnote)
+        .foregroundColor(foregroundColor)
+        .frame(width: CalendarConstants.Monthly.dayWidth,
+               height: CalendarConstants.Monthly.dayWidth - 15)
+        .background(backgroundColor)
+        .clipShape(Capsule())
+        .opacity(opacity)
+        .overlay(isSelected ? CircularSelectionView() : nil)
+        .onTapGesture(perform: notifyManager)
+      
+      auxColorDots
+    }
   }
   
   private var numericDay: String {
@@ -54,33 +60,52 @@ struct DayView: View, MonthlyCalendarManagerDirectAccess {
   }
   
   private var foregroundColor: Color {
-    if isDayToday {
-      return theme.primary
-    } else {
-      return .primary
-    }
+    // TODO move to datasource?
+    isDayToday ? .white : .primary
   }
   
-  private var backgroundColor: some View {
-    let opacity = datasource?.calendar(backgroundColorOpacityForDate: day) ?? 1
+  private var backgroundColor: Color {
     let themeColor = theme.primary
-    let result = datasource?.calendar(backgroundColorForDate: day) ?? themeColor
+    var result = themeColor
     
-    return Group {
-      if isDayToday {
-        Color.primary
-      } else if isDaySelectableAndInRange {
-        result
-          .opacity(opacity)
-      } else {
-        result
-      }
+    if let color = datasource?.calendar(backgroundColorForDate: day) {
+      result = color
     }
+    
+    return isDayToday ? Color.accentColor : result
+  }
+  
+  private var auxColorDots: AnyView {
+    let width = CGFloat(5)
+    let maxDots = 4
+    
+    guard var colors = datasource?.calendar(auxDotsColorsForDate: day),
+          colors.count > 1 else {
+            return Circle()
+              .fill(.clear)
+              .frame(width: width, height: width)
+              .erased
+          }
+    
+    if colors.count > maxDots {
+      colors.removeSubrange(maxDots..<colors.count)
+    }
+    
+    return HStack(spacing: 3) {
+      ForEach(colors, id: \.self) { color in
+        Circle()
+          .fill(color)
+          .frame(width: width, height: width)
+      }
+    }.erased
   }
   
   private var opacity: Double {
-    guard !isDayToday else { return 1 }
-    return isDaySelectableAndInRange ? 1 : 0.15
+    // TODO move to datasource?
+    if isDayToday { return 0.8 }
+    if !isDaySelectableAndInRange { return 0.25 }
+    
+    return datasource?.calendar(backgroundColorOpacityForDate: day) ?? 1
   }
   
   private func notifyManager() {
@@ -98,9 +123,9 @@ private struct CircularSelectionView: View {
   @State private var startBounce = false
   
   var body: some View {
-    Circle()
-      .stroke(Color.primary, lineWidth: 2)
-      .frame(width: radius, height: radius)
+    Capsule()
+      .stroke(Color.accentColor, lineWidth: 2)
+      .frame(width: radius, height: radius - 15)
       .opacity(startBounce ? 1 : 0)
       .animation(.interpolatingSpring(stiffness: 150, damping: 10))
       .onAppear(perform: startBounceAnimation)
