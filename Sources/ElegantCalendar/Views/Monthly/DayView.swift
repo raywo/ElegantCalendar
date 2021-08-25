@@ -5,12 +5,32 @@ import SwiftUI
 
 struct DayView: View, MonthlyCalendarManagerDirectAccess {
   
+  @Environment(\.colorScheme) var colorScheme: ColorScheme
   @Environment(\.calendarTheme) var theme: CalendarTheme
   
   @ObservedObject var calendarManager: MonthlyCalendarManager
   
   let week: Date
   let day: Date
+  
+  var body: some View {
+    VStack(spacing: 7) {
+      Text(numericDay)
+        .font(.footnote)
+        .fontWeight(.medium)
+        .foregroundColor(foregroundColor)
+        .frame(width: CalendarConstants.Monthly.dayWidth,
+               height: CalendarConstants.Monthly.dayWidth - 15)
+        .background(backgroundView)
+        .clipShape(Capsule())
+        .opacity(opacity)
+        .overlay(isSelected ? CircularSelectionView() : nil)
+        .onTapGesture(perform: notifyManager)
+      
+      colorDots
+        .padding(.bottom, 3)
+    }
+  }
   
   private var isDayWithinDateRange: Bool {
     day >= calendar.startOfDay(for: startDate) && day <= endDate
@@ -38,54 +58,67 @@ struct DayView: View, MonthlyCalendarManagerDirectAccess {
     return calendar.isDate(selectedDate, equalTo: day, toGranularities: [.day, .month, .year])
   }
   
-  var body: some View {
-    VStack(spacing: 7) {
-      Text(numericDay)
-        .font(.footnote)
-        .foregroundColor(foregroundColor)
-        .frame(width: CalendarConstants.Monthly.dayWidth,
-               height: CalendarConstants.Monthly.dayWidth - 15)
-        .background(backgroundColor)
-        .clipShape(Capsule())
-        .opacity(opacity)
-        .overlay(isSelected ? CircularSelectionView() : nil)
-        .onTapGesture(perform: notifyManager)
-      
-      auxColorDots
-    }
-  }
-  
   private var numericDay: String {
     String(calendar.component(.day, from: day))
   }
   
   private var foregroundColor: Color {
-    // TODO move to datasource?
-    isDayToday ? .white : .primary
+    datasource?.calendar(foregroundColorForDate: day,
+                         scheme: colorScheme) ?? Color.primary
   }
   
-  private var backgroundColor: Color {
+  private var backgroundColors: [Color] {
     let themeColor = theme.primary
-    var result = themeColor
+    var result = [themeColor]
     
-    if let color = datasource?.calendar(backgroundColorForDate: day) {
-      result = color
+    if let colors = datasource?.calendar(backgroundColorForDate: day) {
+      result = colors
     }
     
-    return isDayToday ? Color.accentColor : result
+    return isDayToday ? [Color.accentColor] : result
+  }
+  
+  private var backgroundView: some View {
+    return GeometryReader { geometry in
+      HStack(spacing: 0) {
+        ForEach(backgroundColors, id: \.self) { color in
+          color
+            .frame(width: geometry.size.width / CGFloat(backgroundColors.count))
+        }
+      }
+    }
+  }
+  
+  private var colorDots: AnyView {
+    let width = CGFloat(5)
+    
+    guard let showDot = datasource?.calendar(showEventDotForDate: day) else {
+      return Circle()
+        .fill(Color.clear)
+        .frame(width: width, height: width)
+        .erased
+    }
+    
+    if showDot {
+      return Circle()
+        .strokeBorder(lineWidth: 0.5, antialiased: true)
+        .frame(width: width, height: width)
+        .erased
+    }
+    
+    return auxColorDots
   }
   
   private var auxColorDots: AnyView {
     let width = CGFloat(5)
     let maxDots = 4
     
-    guard var colors = datasource?.calendar(auxDotsColorsForDate: day),
-          colors.count > 1 else {
-            return Circle()
-              .fill(.clear)
-              .frame(width: width, height: width)
-              .erased
-          }
+    guard var colors = datasource?.calendar(auxDotsColorsForDate: day) else {
+      return Circle()
+        .fill(Color.clear)
+        .frame(width: width, height: width)
+        .erased
+    }
     
     if colors.count > maxDots {
       colors.removeSubrange(maxDots..<colors.count)
@@ -93,9 +126,15 @@ struct DayView: View, MonthlyCalendarManagerDirectAccess {
     
     return HStack(spacing: 3) {
       ForEach(colors, id: \.self) { color in
-        Circle()
-          .fill(color)
-          .frame(width: width, height: width)
+        if color == .clear {
+          Circle()
+            .strokeBorder(lineWidth: 0.5, antialiased: true)
+            .frame(width: width, height: width)
+        } else {
+          Circle()
+            .fill(color)
+            .frame(width: width, height: width)
+        }
       }
     }.erased
   }

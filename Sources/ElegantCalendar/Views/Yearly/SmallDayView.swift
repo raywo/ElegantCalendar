@@ -10,6 +10,15 @@ struct SmallDayView: View, YearlyCalendarManagerDirectAccess {
   let week: Date
   let day: Date
   
+  var body: some View {
+    Text(numericDay)
+      .font(.system(size: 8, weight: fontWeight))
+      .foregroundColor(isDayToday ? .white : .primary)
+      .frame(width: CalendarConstants.Yearly.dayWidth, height: CalendarConstants.Yearly.dayWidth)
+      .background(backgroundView.opacity(opacity))
+      .opacity(isDayWithinDateRange && isDayWithinWeekMonthAndYear ? 1 : 0)
+  }
+  
   private var isDayWithinDateRange: Bool {
     day >= calendar.startOfDay(for: startDate) && day <= endDate
   }
@@ -20,15 +29,6 @@ struct SmallDayView: View, YearlyCalendarManagerDirectAccess {
   
   private var isDayToday: Bool {
     calendar.isDateInToday(day)
-  }
-  
-  var body: some View {
-    Text(numericDay)
-      .font(.system(size: 8, weight: fontWeight))
-      .foregroundColor(isDayToday ? .white : .primary)
-      .frame(width: CalendarConstants.Yearly.dayWidth, height: CalendarConstants.Yearly.dayWidth)
-      .background(backgroundView.opacity(opacity))
-      .opacity(isDayWithinDateRange && isDayWithinWeekMonthAndYear ? 1 : 0)
   }
   
   private var numericDay: String {
@@ -43,8 +43,8 @@ struct SmallDayView: View, YearlyCalendarManagerDirectAccess {
     datasource?.calendar(backgroundColorOpacityForDate: day) ?? 0
   }
   
-  private var backgroundColor: Color {
-    datasource?.calendar(backgroundColorForDate: day) ?? .clear
+  private var backgroundColors: [Color] {
+    datasource?.calendar(backgroundColorForDate: day) ?? []
   }
   
   private var backgroundView: AnyView {
@@ -55,21 +55,32 @@ struct SmallDayView: View, YearlyCalendarManagerDirectAccess {
     
     if let datasource = datasource {
       if datasource.calendar(isRangeStartForDate: day) {
-        return AnyView(backgroundColor
+        return AnyView(coloredBackgroundView
                         .cornerRadius(6.5, corners: .topLeft)
                         .cornerRadius(6.5, corners: .bottomLeft)
         )
       }
       
       if datasource.calendar(isRangeEndForDate: day) {
-        return AnyView(backgroundColor
+        return AnyView(coloredBackgroundView
                         .cornerRadius(6.5, corners: .topRight)
                         .cornerRadius(6.5, corners: .bottomRight)
         )
       }
     }
     
-    return AnyView(backgroundColor)
+    return AnyView(coloredBackgroundView)
+  }
+  
+  private var coloredBackgroundView: some View {
+    return GeometryReader { geometry in
+      HStack(spacing: 0) {
+        ForEach(backgroundColors, id: \.self) { color in
+          color
+            .frame(width: geometry.size.width / CGFloat(backgroundColors.count))
+        }
+      }
+    }
   }
 }
 
